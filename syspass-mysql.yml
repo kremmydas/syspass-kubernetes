@@ -1,0 +1,75 @@
+#
+# DB service
+#
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: syspass-db
+  labels:
+    group: syspass
+    app: syspass-db
+
+spec:
+  ports:
+  - name: mysql-port
+    port: 3306
+    targetPort: 3306
+  clusterIP: None # mySQL Headless Service
+  selector:
+    group: syspass
+    app: syspass-db
+
+---
+
+#
+# Deployment of DB
+#
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: syspass-db
+  labels:
+    group: syspass
+    app: syspass-db
+
+spec:
+  replicas: 1
+  serviceName: "syspass-db"
+  selector:
+    matchLabels:
+      group: syspass   
+      app: syspass-db
+  #
+  # Pod template
+  #
+  template:
+    metadata:
+      name: syspass-db
+      labels:
+        group: syspass   
+        app: syspass-db
+    spec:
+      containers:
+      - name: syspass-db
+        image: andreask81/syspass:mysql
+        ports:
+        - containerPort: 3306
+          name: mysql-port
+        env:
+        - name: DB_REMOTE_HOST
+          value: syspass-app.syspass_default
+        - name: DB_REMOTE_ROOT_PASS
+          value: syspass
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql             
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-persistent-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi

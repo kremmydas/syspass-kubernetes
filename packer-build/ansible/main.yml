@@ -1,0 +1,9 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - geerlingguy.nfs
+    - geerlingguy.packer-rhel
+    - geerlingguy.docker

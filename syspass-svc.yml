@@ -1,0 +1,76 @@
+#
+# Deployment of syspass Service
+#
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: syspass-app
+  labels:
+    group: syspass
+    app: syspass-app
+
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      name: syspassport
+    - port: 443
+      targetPort: 443
+      name: syspassport-https
+  clusterIP: None # sysPass Headless Service
+  selector:
+    group: syspass
+    app: syspass-app
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: syspass-app
+  labels:
+    group: syspass
+    app: syspass-app
+
+spec:
+  selector:
+    matchLabels:
+      group: syspass
+      app: syspass-app
+  serviceName: "syspass-app"
+
+  #
+  # Pod template
+  #
+
+  template:
+    metadata:
+      name: syspass-app
+      labels:
+        group: syspass
+        app: syspass-app
+    spec:
+      containers:
+      - image: andreask81/syspass:latest
+        name: syspass-app
+        volumeMounts:
+        - name: syspass-config
+          mountPath: /var/www/html/sysPass/config
+        - name: syspass-backup
+          mountPath: /var/www/html/sysPass/backup
+  volumeClaimTemplates:
+  - metadata:
+      name: syspass-config
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+
+  - metadata:
+      name: syspass-backup
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
